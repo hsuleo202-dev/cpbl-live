@@ -1,0 +1,32 @@
+name: CPBL Live Score Sync
+
+on:
+  schedule:
+    - cron: '*/1 * * * *'  # 每 1 分鐘全自動執行一次
+  workflow_dispatch:      # 允許手動點按鈕執行
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: 檢查程式碼
+      uses: actions/checkout@v3
+
+    - name: 設定 Python 環境
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: 安裝必要套件
+      run: pip install requests
+
+    - name: 執行 Python 數據清洗
+      run: python 1.py
+
+    - name: 將最新比分同步回 GitHub 網頁
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add cpbl.json
+        git commit -m "🤖 自動更新即時賽況比分" || exit 0
+        git push
