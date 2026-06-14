@@ -1,32 +1,36 @@
-name: CPBL Live Score Sync
+name: CPBL Live Update
 
+# 設定觸發條件
 on:
   schedule:
-    - cron: '*/1 * * * *'  # 每 1 分鐘全自動執行一次
-  workflow_dispatch:      # 允許手動點按鈕執行
+    - cron: '*/2 * * * *' # 每 2 分鐘自動啟動爬蟲抓取一次新賽況
+  workflow_dispatch:      # 關鍵修正：開啟手動強制執行按鈕
 
 jobs:
-  build:
+  update-live-data:
     runs-on: ubuntu-latest
+
     steps:
-    - name: 檢查程式碼
-      uses: actions/checkout@v3
+    - name: 檢查專案原始碼
+      uses: actions/checkout@v4
 
     - name: 設定 Python 環境
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10'
 
-    - name: 安裝必要套件
-      run: pip install requests
+    - name: 安裝網路請求必備套件
+      run: |
+        pip install requests
 
-    - name: 執行 Python 數據清洗
-      run: python 1.py
+    - name: 執行 CPBL 自動化爬蟲資料清洗
+      run: |
+        python 1.py
 
-    - name: 將最新比分同步回 GitHub 網頁
+    - name: 自動將清洗後的 cpbl.json 自動推回 GitHub 儲存庫
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add cpbl.json
-        git commit -m "🤖 自動更新即時賽況比分" || exit 0
-        git push
+        # 檢查檔案有沒有變更，有變更才推，防止沒有比賽時刷無效的 Commit
+        git diff --quiet && git diff --staged --quiet || (git commit -m "🤖 自動更新即時賽況比分" && git push)
