@@ -5,7 +5,7 @@ import re
 
 # 1. 自動偵測今天日期
 now = datetime.now()
-DATE_STR = now.strftime("%Y/%m/%d") # 格式如 2026/06/14
+DATE_STR = now.strftime("%Y/%m/%d")
 YEAR = now.strftime("%Y")
 MONTH = str(int(now.strftime("%m")))
 
@@ -16,14 +16,9 @@ session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)
 def get_today_game_sno():
     url = f"https://www.cpbl.com.tw/schedule/index?year={YEAR}&month={MONTH}&kindCode=A"
     res = session.get(url)
-    
-    # 用正則表達式找出今天日期的所有場次
-    # 邏輯：先找到日期，再找出該日期下的 gameSno
     pattern = rf'{DATE_STR}.*?gameSno=(\d+)'
     matches = re.findall(pattern, res.text, re.DOTALL)
-    
     for sno in matches:
-        # 檢查該場次是否有味全
         box_url = f"https://www.cpbl.com.tw/box/index?gameSno={sno}&year={YEAR}&kindCode=A"
         box_res = session.get(box_url)
         if "味全" in box_res.text:
@@ -36,23 +31,18 @@ if not GAME_SNO:
     print("💤 今天沒有味全龍的比賽，收工。")
     exit()
 
-# 3. 抓取比分資料
+# 3. 抓取並清洗資料
 index_url = f"https://www.cpbl.com.tw/box/index?gameSno={GAME_SNO}&year={YEAR}&kindCode=A"
 res = session.get(index_url)
 token = re.search(r'__RequestVerificationToken.*?value="(.*?)"', res.text).group(1)
 
 api_url = "https://www.cpbl.com.tw/box/getlive"
-payload = {
-    '__RequestVerificationToken': token,
-    'GameSno': GAME_SNO, 'KindCode': 'A', 'Year': YEAR,
-    'PrevOrNext': '0', 'SelectKindCode': 'A', 'SelectYear': YEAR, 'SelectMonth': MONTH
-}
+payload = {'__RequestVerificationToken': token, 'GameSno': GAME_SNO, 'KindCode': 'A', 'Year': YEAR, 'PrevOrNext': '0', 'SelectKindCode': 'A', 'SelectYear': YEAR, 'SelectMonth': MONTH}
 res_api = session.post(api_url, data=payload)
 
 if res_api.status_code == 200:
     data = res_api.json()
     if data.get("Success"):
-        # 整理成晶片專用的精簡格式
         detail = json.loads(data["GameDetailJson"])[0]
         logs = json.loads(data["LiveLogJson"])
         latest = logs[-1] if logs else {}
