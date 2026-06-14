@@ -1,105 +1,77 @@
 import requests
 import json
-from datetime import datetime
-import timezonefinder  # 如果需要處理時區，或直接用簡化時間
+import os
 
-# 🚀 自動取得今天台灣時間的年、月、日
-# GitHub 伺服器預設是 UTC 時間，我們手動加 8 小時修正為台灣時間
-from datetime import timedelta
-now_tw = datetime.utcnow() + timedelta(hours=8)
-YEAR = now_tw.strftime("%Y")
-MONTH = str(int(now_tw.strftime("%m")))  # 去除前導零，例如 "06" 變成 "6"
-DATE_STR = now_tw.strftime("%Y/%m/%d")
+# 1. 讀取晶片傳來的設定檔
+def load_config():
+    try:
+        if os.path.exists("config.json"):
+            with open("config.json", "r") as f:
+                return json.load(f).get("game_sno", "163")
+    except:
+        pass
+    return "163" # 預設場次
+
+GAME_SNO = load_config()
+YEAR = "2026"
+MONTH = "6"
 
 session = requests.Session()
-session.headers.update({
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'X-Requested-With': 'XMLHttpRequest'
-})
+session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'})
 
-print(f"📅 機器人啟動！正在查詢今天 ({DATE_STR}) 的賽程...")
+# 2. 爬取中職資料
+def fetch_data():
+    index_url = f"https://www.cpbl.com.tw/box/index?gameSno={GAME_SNO}&year={YEAR}&kindCode=A"
+    res = session.get(index_url)
+    if res.status_code != 200: return None
 
-# 第一步：直接抓取整個月的賽程表表單
-schedule_url = f"https://www.cpbl.com.tw/schedule/index?year={YEAR}&month={MONTH}&kindCode=A"
-response_sched = session.get(schedule_url)
-
-target_game_sno = None
-
-if response_sched.status_code == 200:
-    # 尋找今天的比賽區塊
-    # 中職官網賽程表的 HTML 會包含日期的文字
-    html_text = response_sched.text
-    
-    # 我們在網頁裡尋找有沒有包含「味全」以及今天的日期
-    # 這裡實作自動尋找今天賽程中含有味全龍的 GameSno
-    import re
-    # 尋找當天賽程區塊的簡易邏輯：找出所有的比賽場次與隊伍
-    # 為了百分之百精準，我們直接比對中職官網當天的所有比賽
-    # 透過正則表達式撈出遊戲編號
-    games = re.findall(r'gameSno=(\d+).*?year='+YEAR, html_text)
-    
-    # 為了簡化晶片端的負擔，我們直接幫你走訪今天這月份的賽程
-    # 尋找符合今天日期且帶有 "味全" 關鍵字的欄位
-    # 我們這邊用一個最穩定的官方 API 邏輯：
-    # 直接用對方的功課表比對，如果今天有味全的比賽，撈出它的 GameSno
-    
-    # 簡化測試：我們讓機器人直接去爬今天的所有場次，看哪一場有味全
-    # 這裡我們用一個更萬無一失的做法：尋找包含 gameSno 的連結，並檢查前後文是否有味全
-    # 找尋官網 HTML 中的比賽場次
-    matches = re.findall(r'gameSno=(\d+)&year='+YEAR+'&kindCode=A', html_text)
-    # 去重
-    matches = list(set(matches))
-    
-    for sno in matches:
-        # 測試每一場比賽的網頁內容，看是不是今天的比賽，而且有沒有味全
-        box_url = f"https://www.cpbl.com.tw/box/index?gameSno={sno}&year={YEAR}&kindCode=A"
-        res_box = session.get(box_url)
-        if res_box.status_code == 200 and DATE_STR in res_box.text and "味全" in res_box.text:
-            target_game_sno = sno
-            print(f"🎯 找到了！今天有味全龍的比賽！場次編號：{target_game_sno}")
-            break
-
-if not target_game_sno:
-    print("💤 今天沒有味全龍的比賽，或者比賽尚未開打。機器人自動收工，不更新檔案。")
-    exit()
-
-# 第二步：既然有味全的比賽，開始抓取即時比分 JSON
-index_url = f"https://www.cpbl.com.tw/box/index?gameSno={target_game_sno}&year={YEAR}&kindCode=A"
-response_index = session.get(index_url)
-
-if response_index.status_code == 200:
-    try:
-        token_start = response_index.text.find('__RequestVerificationToken" type="hidden" value="') + 49
-        token_end = response_index.text.find('"', token_start)
-        fresh_token = response_index.text[token_start:token_end]
-    except Exception:
-        print("❌ 提取 Token 失敗")
-        exit()
+    # 提取 Token
+    token_start = res.text.find('__RequestVerificationToken" type="hidden" value="') + 49
+    token = res.text[token_start:res.text.find('"', token_start)]
 
     api_url = "https://www.cpbl.com.tw/box/getlive"
     payload = {
-        '__RequestVerificationToken': fresh_token,
-        'GameSno': target_game_sno,
-        'KindCode': 'A',
-        'Year': YEAR,
-        'PrevOrNext': '0',
-        'SelectKindCode': 'A',
-        'SelectYear': YEAR,
-        'SelectMonth': MONTH
+        '__RequestVerificationToken': token,
+        'GameSno': GAME_SNO, 'KindCode': 'A', 'Year': YEAR,
+        'PrevOrNext': '0', 'SelectKindCode': 'A', 'SelectYear': YEAR, 'SelectMonth': MONTH
+    }
+    
+    res_api = session.post(api_url, data=payload)
+    if res_api.status_code == 200:
+        return res_api.json()
+    return None
+
+# 3. 處理數據並產出極簡 JSON
+raw_data = fetch_data()
+if raw_data and raw_data.get("Success"):
+    game_detail = json.loads(raw_data.get("GameDetailJson", "[]"))
+    live_logs = json.loads(raw_data.get("LiveLogJson", "[]"))
+    
+    # 找當前場次數據
+    game = next((item for item in game_detail if str(item.get("GameSno")) == GAME_SNO), {})
+    latest = live_logs[-1] if live_logs else {}
+
+    # 組裝給晶片的「懶人包」
+    final_data = {
+        "custom_info": {"game_sno": GAME_SNO, "date": "2026/06/14"},
+        "Success": True,
+        "GameDetail": {
+            "v_team": game.get("VisitingTeamName"),
+            "h_team": game.get("HomeTeamName"),
+            "v_score": game.get("VisitingTotalScore", 0),
+            "h_score": game.get("HomeTotalScore", 0)
+        },
+        "LiveStatus": {
+            "inning": latest.get("InningChi"),
+            "balls": int(float(latest.get("BallCnt", 0))),
+            "strikes": int(float(latest.get("StrikeCnt", 0))),
+            "outs": int(float(latest.get("OutCnt", 0))),
+            "base": [bool(latest.get("FirstBase")), bool(latest.get("SecondBase")), bool(latest.get("ThirdBase"))]
+        }
     }
 
-    response_api = session.post(api_url, data=payload)
-
-    if response_api.status_code == 200:
-        raw_json = response_api.json()
-        
-        # 把今天的日期和場次一起塞進 JSON 裡面，讓晶片可以讀到
-        raw_json['custom_info'] = {
-            'date': DATE_STR,
-            'game_sno': target_game_sno,
-            'team_filter': '味全龍'
-        }
-        
-        with open("cpbl.json", "w", encoding="utf-8") as f:
-            json.dump(raw_json, f, ensure_ascii=False, indent=4)
-        print("🎉 成功更新今日味全龍賽事數據至 cpbl.json！")
+    with open("cpbl.json", "w", encoding="utf-8") as f:
+        json.dump(final_data, f, ensure_ascii=False)
+    print(f"✅ 成功更新場次 {GAME_SNO}")
+else:
+    print("❌ 爬取失敗")
