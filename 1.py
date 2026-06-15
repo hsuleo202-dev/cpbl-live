@@ -20,6 +20,15 @@ session.headers.update({
 def debug_print(msg):
     print(f"[DEBUG] {time.strftime('%H:%M:%S')} - {msg}")
 
+def safe_int_cast(val, default=0):
+    """安全轉換型態函數，防止 NoneType 或空字串導致 float() / int() 崩潰"""
+    if val is None or str(val).strip() == "":
+        return default
+    try:
+        return int(float(str(val)))
+    except (ValueError, TypeError):
+        return default
+
 # ====================================================================
 # 🚀 全自動化邏輯核心
 # ====================================================================
@@ -66,20 +75,29 @@ try:
 
     # 解析資料
     game_detail = json.loads(raw.get("GameDetailJson", "[]"))
-    scoreboard = next((item for item in game_detail if int(float(item.get("GameSno", 0))) == int(float(GAME_SNO))), {})
+    
+    # 這裡也加上防空保護，避免比對 GameSno 時崩潰
+    scoreboard = {}
+    for item in game_detail:
+        item_sno = item.get("GameSno")
+        if item_sno is not None and safe_int_cast(item_sno) == safe_int_cast(GAME_SNO):
+            scoreboard = item
+            break
+
     live_logs = json.loads(raw.get("LiveLogJson", "[]"))
     latest = live_logs[-1] if live_logs else {}
 
+    # 使用 safe_int_cast 徹底解決 float() argument must be a string... 錯誤
     final_data = {
-        "game_sno": int(GAME_SNO),
-        "v_team": scoreboard.get("VisitingTeamName"),
-        "h_team": scoreboard.get("HomeTeamName"),
-        "v_score": int(float(scoreboard.get("VisitingTotalScore", 0))),
-        "h_score": int(float(scoreboard.get("HomeTotalScore", 0))),
-        "balls": int(float(latest.get("BallCnt", 0))),
-        "strikes": int(float(latest.get("StrikeCnt", 0))),
-        "outs": int(float(latest.get("OutCnt", 0))),
-        "status": scoreboard.get("GameStatusChi")
+        "game_sno": safe_int_cast(GAME_SNO),
+        "v_team": scoreboard.get("VisitingTeamName", "未知"),
+        "h_team": scoreboard.get("HomeTeamName", "未知"),
+        "v_score": safe_int_cast(scoreboard.get("VisitingTotalScore")),
+        "h_score": safe_int_cast(scoreboard.get("HomeTotalScore")),
+        "balls": safe_int_cast(latest.get("BallCnt")),
+        "strikes": safe_int_cast(latest.get("StrikeCnt")),
+        "outs": safe_int_cast(latest.get("OutCnt")),
+        "status": scoreboard.get("GameStatusChi", "未開賽")
     }
 
     with open("cpbl.json", "w", encoding="utf-8") as f:
@@ -87,6 +105,5 @@ try:
     debug_print("檔案更新成功，任務結束。")
 
 except Exception as e:
-    # 關鍵修正：這裡會把錯誤噴到 GitHub Actions 的終端機
     print(f"❌ 發生致命錯誤: {str(e)}")
-    raise e # 強制拋出讓 GitHub 記錄失敗
+    raise e
