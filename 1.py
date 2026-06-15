@@ -41,23 +41,25 @@ except Exception as e:
 # ====================================================================
 index_url = f"https://www.cpbl.com.tw/box/index?gameSno={GAME_SNO}&year={YEAR}&kindCode=A"
 print("🔄 請求官網 Token 中...")
-
+# 找到獲取 Token 的區塊，修改如下：
 try:
-    # 建立 Session 時先請求一次首頁獲取 Cookie
-    session.get("https://www.cpbl.com.tw/", timeout=15)
-    time.sleep(1) # 增加延遲避免 403
+    # 增加隨機延遲，規避 IP 瞬間高頻檢查
+    import random
+    time.sleep(random.uniform(2, 5)) 
     
-    response_index = session.get(index_url, timeout=15)
+    # 建立 Session 後先訪問一次首頁，並明確告知是網頁訪問
+    session.get("https://www.cpbl.com.tw/", timeout=20)
+    time.sleep(random.uniform(1, 3))
+    
+    response_index = session.get(index_url, timeout=20)
+    
+    # 如果還是 403，這裡進行最後一次嘗試，更換 User-Agent
     if response_index.status_code == 403:
-        print("❌ 【403 錯誤】伺服器拒絕訪問，爬蟲節點 IP 可能被列管。")
-        sys.exit(1)
-        
-    token_match = re.search(r'__RequestVerificationToken"\s+type="hidden"\s+value="(.*?)"', response_index.text)
-    if token_match:
-        fresh_token = token_match.group(1)
-    else:
-        print("❌ 【結構錯誤】找不到 Token")
-        sys.exit(1)
+        session.headers.update({'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'})
+        response_index = session.get(index_url, timeout=20)
+
+    if response_index.status_code == 200:
+        # ... (後續 Token 解析邏輯不變)
 except Exception as e:
     print(f"❌ 【異常】: {e}")
     sys.exit(1)
