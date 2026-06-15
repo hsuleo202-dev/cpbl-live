@@ -8,7 +8,7 @@ import requests
 # ====================================================================
 
 # 已全面同步為您手動驗證通暢後的最新 GAS 雲端網址
-GAS_URL = "https://script.google.com/macros/s/AKfycbyS3LpKE_JUb_9jdtt7qsec7iETtPwfasoG8cv4uQ9_ragoF5v77zTEhTDkw-TyGCHR/exec"
+GAS_URL = "https://script.google.com/macros/s/AKfycbzKv0-EeHPdQ6AZ47_GQC8RGLxTiABmjW-a4kam9d09fVa3x-SVLhXJgklzBrhwv_6g/exec"
 
 def main():
     print("🔄 正在向全新 GAS 中樞請求即時賽況清洗數據...")
