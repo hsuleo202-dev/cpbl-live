@@ -7,8 +7,8 @@ import requests
 # 🎯 CPBL 看板系統 GitHub 輕量端 (v4.0 - E.py)
 # ====================================================================
 
-# 請將此處替換為您上方部署好的完整 GAS 網頁應用程式部署網址
-GAS_URL = "https://script.google.com/macros/s/AKfycbxTanVcltBfB8WdmuPQBig1HalQCqYJJLzJyrGGoJVMNVjq0IO4jbLsPzQr9P7J96SC/exec"
+# 已自動更新為你最新部署的 GAS 網址
+GAS_URL = "https://script.google.com/macros/s/AKfycbx4IhmBafA5hJgvUm4Ce1ohfSwjcOM1qzvgXwD4THCF_bh8BsV2zdbxakUJyL6uHgL3/exec"
 
 def main():
     print("🔄 正在向 GAS 中樞請求即時賽況清洗數據...")
