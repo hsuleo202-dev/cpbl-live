@@ -6,7 +6,7 @@ import sys
 # ====================================================================
 # 🎯 雲端設定區（請務必換成你重新部署後的 GAS 網址）
 # ====================================================================
-GAS_URL = "https://script.google.com/macros/s/AKfycbwEBkwYPD43kR6OXVtMCV2nt7on-sIe4PvGPIfiO7tkoWMBwrPIg_1coPRp2QFfdwAU/exec"
+GAS_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnSMHjH8kwbduHPEN2Tgi2DVWCQWG_KGQYYPbRqlVahxG5xAGMnGu_XFdhOU8aVyvqzdcLFoh8ihbGRVkkTuFaw5v2BtXH_Uj3Z_IjiyQlQ3Q61I22cZR0uXqoaM2m7cWPXPc6Z0oYwg7uHbdAFbkYkx-iw2_Kj-N6c3ANFAkyPsyvL4SraM9bIf_cQL3pZfv1ocWrJ5ilBU1CI3M0FUnDGohdEksu9FxAGd7faLzR2fb_xWSJoUgbo46EFmpmNnzP9s0KMJpqSddIN-FYCBuwlfAwKBag&lib=M2LHac6VRrvq7A3NOANO4ZYtiO8R5qc0s"
 
 session = requests.Session()
 session.headers.update({
