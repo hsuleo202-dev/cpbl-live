@@ -8,7 +8,7 @@ import requests
 # ====================================================================
 
 # 保持您目前的最新 GAS 網址不變
-GAS_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnRi62di_gXzHX91hlA39-ap_vEpmJPH_6gRpXgLXt1kI4fhVsXDgwRXgi5Xok1PSxK_S5Sd18M4-2a9lRSpRNdWrC-R1TF-cs50s9l_WTQNWUIn9F7ubOY_yNL-MIF1iU4YR8bXYqn7WXAlLS64XonIYuZtBCZAK4OkjSwjtptS0G0Pi4oqwW-ED0dcCSOAdRBX-i5tCqMtBALYraN836qwlz51DJ6f-asgcWqpbN-uh2TuQ8GeiPszx8OsnrXKe580GeKKQFfg3W1HLCFEKS5TSJFvfQ&lib=M2LHac6VRrvq7A3NOANO4ZYtiO8R5qc0s"
+GAS_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnSGUcbrd7DeUm5pSWPiYO-9k88UJx8bXDaXVg3OEtaP7W9OGewXwxgKye8PJvQvTP6qz45Gk7bW9hRg6QL4F4fKCRBaghDFKiQPDoYEubR7wZW13hd6vK0rTDAqsy5xpsOEoYYZlk-u4DLWKattYbuxZIKfHXUWlxCCb-TDi_dkZD3Z9CcTYxI8XHob88nktXhrAl_onPJAkvmDLVaiSbpoPkXqyG-GWRK--iJv7t5BrFScgGYHcDnVq1cUnCprbFa9tqpc42jIv13x5JofIvHcYXRV1w&lib=M2LHac6VRrvq7A3NOANO4ZYtiO8R5qc0s"
 def main():
     print("🔄 正在向全新 GAS 中樞請求即時賽況清洗數據 (GET 模式)...")
     try:
